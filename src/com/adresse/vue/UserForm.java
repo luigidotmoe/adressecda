@@ -1,5 +1,6 @@
 package com.adresse.vue;
 
+import com.adresse.manager.ManagerUtilisateur;
 import com.adresse.model.Utilisateur;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import javax.swing.*;
@@ -8,7 +9,9 @@ import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.Locale;
+import com.adresse.regex.UserRegex;
 
 
 public class UserForm extends JDialog {
@@ -40,18 +43,26 @@ public class UserForm extends JDialog {
         btValid.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                createUser();
+                try {
+                    createUser();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
         btCancel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                createUser();
+                try {
+                    createUser();
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
     }
 
-    public void createUser() {
+    public void createUser() throws SQLException {
         //récupérer le contenu des 5 champs de texte
         String name = tfName.getText();
         String firstname = tfFirstname.getText();
@@ -62,10 +73,28 @@ public class UserForm extends JDialog {
         if (!name.isEmpty() && !firstname.isEmpty() && !email.isEmpty()) {
             //test si les passwords correspondent
             if (password.equals(verifPassword)) {
+                // vérifie les regex
+                if (!email.matches(UserRegex.USER_REGEX_MAIL)) {
+                    JOptionPane.showMessageDialog(null,
+                            "L'email n'est pas valide",
+                            "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (!password.matches(UserRegex.USER_REGEX_PASSWORD)) {
+                    JOptionPane.showMessageDialog(null,
+                            "Le mot de passe n'est pas valide",
+                            "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 password = BCrypt.hashpw(password, BCrypt.gensalt());
                 Utilisateur user = new Utilisateur(name, firstname, email, password);
+                // Enregistrer l'utilisateur dans la base de données
+                ManagerUtilisateur.create(user);
+                //  Afficher un message pour indiquer que le compte a été ajouté
                 JOptionPane.showMessageDialog(null,
-                        "le compte a été ajouté",
+                        "Compte ajouté en BDD avec succès",
                         "Valide",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
