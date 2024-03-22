@@ -1,3 +1,4 @@
+import com.adresse.vue.MainFrame;
 import com.adresse.vue.UserForm;
 
 import java.sql.SQLException;
@@ -6,7 +7,7 @@ import java.sql.SQLException;
 public class Main {
     public static void main(String[] args) throws SQLException {
 
-        UserForm formulaire = new UserForm(null);
+        MainFrame listUtilisateurs = new MainFrame();
 
     }
 }
